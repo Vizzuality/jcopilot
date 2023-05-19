@@ -65,7 +65,7 @@ async def receive_issue(background_tasks: BackgroundTasks, issue_data: IssueData
     return ("OK")
 
 async def query_ai(summary: str, description: str):
-    chat = ChatOpenAI(model_name="gpt-4", temperature=0.3, openai_api_key=open_ai_token)
+    chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.5, openai_api_key=open_ai_token)
 
     question = f"issue: {summary}, {description}"
     
