@@ -1,0 +1,8 @@
+fastapi
+typing
+pydantic
+uvicorn
+langchain
+python-dotenv
+openai
+jira
