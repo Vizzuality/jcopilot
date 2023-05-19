@@ -1,8 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException, Header
+from fastapi.responses import PlainTextResponse
 from typing import Optional
 from pydantic import BaseModel
 from langchain.chat_models import ChatOpenAI
-from langchain.schema import AIMessage, HumanMessage, SystemMessage
+from langchain.schema import HumanMessage, SystemMessage
 import os
 from dotenv import load_dotenv
 from jira import JIRA
@@ -16,6 +17,7 @@ open_ai_token = os.getenv("OPEN_AI_TOKEN")
 jira_url = os.getenv("JIRA_URL")
 jira_email = os.getenv("JIRA_EMAIL")
 jira_token = os.getenv("JIRA_TOKEN")
+api_token = os.getenv("API_TOKEN")
 
 class Project(BaseModel):
     id: int
@@ -34,8 +36,27 @@ class Issue(BaseModel):
 class IssueData(BaseModel):
     issue: Issue
 
+@app.get("/")
+async def index():
+    return PlainTextResponse("")
+
+@app.get("/robots.txt")
+async def robots_txt():
+    return PlainTextResponse("User-agent: *\nDisallow: /")
+
+def verify_token(authorization: Optional[str] = Header(None)):
+    if authorization is None or not authorization.startswith("Bearer"):
+        raise HTTPException(status_code=400, detail="Invalid token or token missing")
+
+    token = authorization.split(" ")[1]  # Bearer token_value
+
+    if token != api_token:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
+    return token
+
 @app.post("/issue/")
-async def receive_issue(background_tasks: BackgroundTasks, issue_data: IssueData):
+async def receive_issue(background_tasks: BackgroundTasks, issue_data: IssueData, token: str = Depends(verify_token)):
     print(issue_data.dict())
     summary = issue_data.issue.fields.summary
     description = issue_data.issue.fields.description
